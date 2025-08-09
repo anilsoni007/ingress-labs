@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: static-assets-deployment
+  labels:
+    app: static-assets
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: static-assets
+  template:
+    metadata:
+      labels:
+        app: static-assets
+    spec:
+      containers:
+      - name: static-assets
+        image: ingress-lab/static-assets:latest
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "25m"
+          limits:
+            memory: "64Mi"
+            cpu: "50m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: static-assets-service
+spec:
+  selector:
+    app: static-assets
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP

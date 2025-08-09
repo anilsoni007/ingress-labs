@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Static Assets - Ingress Lab</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📁 Static Assets Service</h1>
+            <p>Demonstrating static file serving through Ingress</p>
+        </header>
+
+        <main>
+            <section class="asset-showcase">
+                <h2>Asset Types</h2>
+                <div class="asset-grid">
+                    <div class="asset-card">
+                        <img src="images/sample.jpg" alt="Sample Image" />
+                        <h3>Images</h3>
+                        <p>JPEG, PNG, SVG files</p>
+                    </div>
+                    
+                    <div class="asset-card">
+                        <div class="file-icon">📄</div>
+                        <h3>Documents</h3>
+                        <p><a href="docs/sample.pdf" target="_blank">PDF Files</a></p>
+                    </div>
+                    
+                    <div class="asset-card">
+                        <div class="file-icon">🎵</div>
+                        <h3>Media</h3>
+                        <p>Audio and Video files</p>
+                    </div>
+                    
+                    <div class="asset-card">
+                        <div class="file-icon">💾</div>
+                        <h3>Downloads</h3>
+                        <p><a href="downloads/sample.zip">Sample Archive</a></p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="ingress-info">
+                <h2>🔗 Ingress Configuration</h2>
+                <div class="code-block">
+                    <pre><code>
+# Static assets routing
+- path: /static
+  pathType: Prefix
+  backend:
+    service:
+      name: static-assets-service
+      port:
+        number: 80
+                    </code></pre>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Served via Kubernetes Ingress → Nginx</p>
+            <a href="/" class="back-link">← Back to Dashboard</a>
+        </footer>
+    </div>
+</body>
+</html>

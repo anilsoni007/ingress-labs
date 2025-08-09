@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./services/frontend
+    ports:
+      - "3000:80"
+    networks:
+      - ingress-lab
+
+  api-gateway:
+    build: ./services/api-gateway
+    ports:
+      - "3001:3001"
+    networks:
+      - ingress-lab
+
+  user-service:
+    build: ./services/user-service
+    ports:
+      - "5000:5000"
+    networks:
+      - ingress-lab
+
+  product-service:
+    build: ./services/product-service
+    ports:
+      - "8080:8080"
+    networks:
+      - ingress-lab
+
+  websocket-service:
+    build: ./services/websocket-service
+    ports:
+      - "3002:3002"
+    networks:
+      - ingress-lab
+
+  admin-service:
+    build: ./services/admin-service
+    ports:
+      - "8090:8090"
+    networks:
+      - ingress-lab
+
+  static-assets:
+    build: ./services/static-assets
+    ports:
+      - "8081:80"
+    networks:
+      - ingress-lab
+
+networks:
+  ingress-lab:
+    driver: bridge

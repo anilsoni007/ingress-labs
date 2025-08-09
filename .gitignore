@@ -1,0 +1,5 @@
+scripts/*
+
+k8s/*
+
+ingress/*
