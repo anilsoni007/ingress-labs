@@ -1,0 +1,47 @@
+# Since both of our microservices have diff diff healthcheck paths we need to create separate ingress resource for each app.
+
+# Ingress for hello-service
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hello-ingress
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+    alb.ingress.kubernetes.io/healthcheck-path: /hello/health
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /hello
+            pathType: Prefix
+            backend:
+              service:
+                name: hello-service
+                port:
+                  number: 5000
+---
+# Ingress for info-service
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: info-ingress
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+    alb.ingress.kubernetes.io/healthcheck-path: /info/health
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /info
+            pathType: Prefix
+            backend:
+              service:
+                name: info-service
+                port:
+                  number: 5001

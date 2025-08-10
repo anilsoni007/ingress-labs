@@ -1,0 +1,131 @@
+# -----------------------------------------------------
+# Stable version (v1)
+# -----------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-service-v1
+  labels:
+    app: hello-service-v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hello-service-v1
+  template:
+    metadata:
+      labels:
+        app: hello-service-v1
+    spec:
+      containers:
+      - name: hello-service
+        image: asoni007/hello-service:latest
+        ports:
+        - containerPort: 5000
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-service-v1
+spec:
+  selector:
+    app: hello-service-v1
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+  type: ClusterIP
+
+# -----------------------------------------------------
+# Canary version (v2)
+# -----------------------------------------------------
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-service-v2
+  labels:
+    app: hello-service-v2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-service-v2
+  template:
+    metadata:
+      labels:
+        app: hello-service-v2
+    spec:
+      containers:
+      - name: hello-service
+        image: asoni007/hello-service:latest # <-- Canary image
+        ports:
+        - containerPort: 5000
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-service-v2
+spec:
+  selector:
+    app: hello-service-v2
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+  type: ClusterIP
+
+# -----------------------------------------------------
+# ALB Ingress with Weighted Canary Routing
+# -----------------------------------------------------
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hello-canary-ingress
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+
+    # Replace with your ACM certificate ARN
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:<AWS_ACC>:certificate/<CERT_ID>
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+
+    # Weighted Target Groups for Canary
+    alb.ingress.kubernetes.io/actions.hello-canary: >
+      {
+        "Type": "forward",
+        "ForwardConfig": {
+          "TargetGroups": [
+            { "ServiceName": "hello-service-v1", "ServicePort": 5000, "Weight": 90 },
+            { "ServiceName": "hello-service-v2", "ServicePort": 5000, "Weight": 10 }
+          ]
+        }
+      }
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /hello
+            pathType: Prefix
+            backend:
+              service:
+                name: hello-canary # Matches the action name above
+                port:
+                  name: use-annotation

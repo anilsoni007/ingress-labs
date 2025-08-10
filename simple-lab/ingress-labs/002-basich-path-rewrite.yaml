@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hello-ingress
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+    alb.ingress.kubernetes.io/healthcheck-path: /hello/health
+    alb.ingress.kubernetes.io/actions.redirect-to-hello: >   # 🔹 Redirect action , action.action_name
+      {"Type":"redirect","RedirectConfig":{"Protocol":"HTTP","Port":"80","StatusCode":"HTTP_301","Host":"#{host}","Path":"/hello"}}
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Exact
+            backend:
+              service:
+                name: redirect-to-hello   # Must match the action name above,its just a placeholder ,not an actual service.
+                port:
+                  name: use-annotation #This tells Kubernetes: “This backend is handled via an ALB action annotation, not a Service”
+          - path: /hello
+            pathType: Prefix
+            backend:
+              service:
+                name: hello-service
+                port:
+                  number: 5000
+
