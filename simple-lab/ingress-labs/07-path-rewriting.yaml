@@ -1,0 +1,60 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: path-rewriting
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    # Path rewriting - /api/v1/hello -> /hello
+    alb.ingress.kubernetes.io/actions.rewrite-hello: |
+      {
+        "type": "redirect",
+        "redirectConfig": {
+          "statusCode": "HTTP_301",
+          "path": "/hello#{path}",
+          "query": "#{query}"
+        }
+      }
+    # Path rewriting - /api/v1/info -> /info  
+    alb.ingress.kubernetes.io/actions.rewrite-info: |
+      {
+        "type": "redirect", 
+        "redirectConfig": {
+          "statusCode": "HTTP_301",
+          "path": "/info#{path}",
+          "query": "#{query}"
+        }
+      }
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /api/v1/hello
+        pathType: Prefix
+        backend:
+          service:
+            name: rewrite-hello
+            port:
+              number: use-annotation
+      - path: /api/v1/info
+        pathType: Prefix
+        backend:
+          service:
+            name: rewrite-info
+            port:
+              number: use-annotation
+      - path: /hello
+        pathType: Prefix
+        backend:
+          service:
+            name: hello-service
+            port:
+              number: 5000
+      - path: /info
+        pathType: Prefix
+        backend:
+          service:
+            name: info-service
+            port:
+              number: 5001

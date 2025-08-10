@@ -1,0 +1,77 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: custom-responses
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    # Custom 404 response
+    alb.ingress.kubernetes.io/actions.custom-404: |
+      {
+        "type": "fixed-response",
+        "fixedResponseConfig": {
+          "contentType": "application/json",
+          "statusCode": "404",
+          "messageBody": "{\"error\":\"Service not found\",\"message\":\"The requested service is not available\"}"
+        }
+      }
+    # Maintenance mode response
+    alb.ingress.kubernetes.io/actions.maintenance: |
+      {
+        "type": "fixed-response",
+        "fixedResponseConfig": {
+          "contentType": "text/html",
+          "statusCode": "503", 
+          "messageBody": "<html><body><h1>Maintenance Mode</h1><p>Service temporarily unavailable</p></body></html>"
+        }
+      }
+    # Health check response
+    alb.ingress.kubernetes.io/actions.health-check: |
+      {
+        "type": "fixed-response",
+        "fixedResponseConfig": {
+          "contentType": "application/json",
+          "statusCode": "200",
+          "messageBody": "{\"status\":\"healthy\",\"timestamp\":\"#{time}\"}"
+        }
+      }
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /health
+        pathType: Exact
+        backend:
+          service:
+            name: health-check
+            port:
+              number: use-annotation
+      - path: /maintenance
+        pathType: Exact
+        backend:
+          service:
+            name: maintenance
+            port:
+              number: use-annotation
+      - path: /hello
+        pathType: Prefix
+        backend:
+          service:
+            name: hello-service
+            port:
+              number: 5000
+      - path: /info
+        pathType: Prefix
+        backend:
+          service:
+            name: info-service
+            port:
+              number: 5001
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: custom-404
+            port:
+              number: use-annotation

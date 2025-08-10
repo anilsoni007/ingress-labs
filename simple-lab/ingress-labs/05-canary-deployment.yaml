@@ -1,0 +1,79 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: canary-hello-service
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/group.name: canary-group
+    alb.ingress.kubernetes.io/group.order: '100'
+    # Route 10% traffic to canary version
+    alb.ingress.kubernetes.io/conditions.canary-hello: |
+      [{"field":"http-header","httpHeaderConfig":{"httpHeaderName":"X-Canary","values":["true"]}}]
+    alb.ingress.kubernetes.io/actions.canary-hello: |
+      {
+        "type": "forward",
+        "forwardConfig": {
+          "targetGroups": [
+            {
+              "serviceName": "hello-service-v2",
+              "servicePort": "5000",
+              "weight": 10
+            },
+            {
+              "serviceName": "hello-service",
+              "servicePort": "5000", 
+              "weight": 90
+            }
+          ]
+        }
+      }
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /hello
+        pathType: Prefix
+        backend:
+          service:
+            name: canary-hello
+            port:
+              number: use-annotation
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: blue-green-info-service
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/group.name: canary-group
+    alb.ingress.kubernetes.io/group.order: '200'
+    # Blue-Green deployment with header-based routing
+    alb.ingress.kubernetes.io/conditions.blue-green-info: |
+      [{"field":"http-header","httpHeaderConfig":{"httpHeaderName":"X-Version","values":["green"]}}]
+    alb.ingress.kubernetes.io/actions.blue-green-info: |
+      {
+        "type": "forward",
+        "forwardConfig": {
+          "targetGroups": [
+            {
+              "serviceName": "info-service-green",
+              "servicePort": "5001"
+            }
+          ]
+        }
+      }
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /info
+        pathType: Prefix
+        backend:
+          service:
+            name: blue-green-info
+            port:
+              number: use-annotation

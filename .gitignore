@@ -1,5 +1,7 @@
-scripts/*
+
 
 k8s/*
 
-ingress/*
+ingress-labs/*
+
+build.sh

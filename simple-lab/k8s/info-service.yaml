@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: info-service
+  labels:
+    app: info-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: info-service
+  template:
+    metadata:
+      labels:
+        app: info-service
+    spec:
+      containers:
+      - name: info-service
+        image: asoni007/info-service:latest
+        ports:
+        - containerPort: 5001
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: info-service
+spec:
+  selector:
+    app: info-service
+  ports:
+    - protocol: TCP
+      port: 5001
+      targetPort: 5001
+  type: ClusterIP

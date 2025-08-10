@@ -1,0 +1,54 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: advanced-annotations
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    
+    # Load balancer settings
+    alb.ingress.kubernetes.io/load-balancer-name: advanced-ingress-alb
+    alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=86400
+    
+    # Health check settings
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '15'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: '2'
+    
+    # Security settings
+    alb.ingress.kubernetes.io/security-groups: sg-xxxxxxxxx
+    alb.ingress.kubernetes.io/manage-backend-security-group-rules: 'true'
+    
+    # Custom response headers
+    alb.ingress.kubernetes.io/actions.response-headers: |
+      {
+        "type": "fixed-response",
+        "fixedResponseConfig": {
+          "contentType": "text/plain",
+          "statusCode": "200",
+          "messageBody": "Custom headers applied"
+        }
+      }
+    
+    # WAF integration
+    alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:us-east-1:ACCOUNT:regional/webacl/NAME/ID
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /hello
+        pathType: Prefix
+        backend:
+          service:
+            name: hello-service
+            port:
+              number: 5000
+      - path: /info
+        pathType: Prefix
+        backend:
+          service:
+            name: info-service
+            port:
+              number: 5001

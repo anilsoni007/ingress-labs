@@ -1,0 +1,45 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: weighted-routing
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    # Weighted routing - 70% to v1, 30% to v2
+    alb.ingress.kubernetes.io/actions.weighted-hello: |
+      {
+        "type": "forward",
+        "forwardConfig": {
+          "targetGroups": [
+            {
+              "serviceName": "hello-service",
+              "servicePort": "5000",
+              "weight": 70
+            },
+            {
+              "serviceName": "hello-service-v2", 
+              "servicePort": "5000",
+              "weight": 30
+            }
+          ]
+        }
+      }
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /hello
+        pathType: Prefix
+        backend:
+          service:
+            name: weighted-hello
+            port:
+              number: use-annotation
+      - path: /info
+        pathType: Prefix
+        backend:
+          service:
+            name: info-service
+            port:
+              number: 5001
